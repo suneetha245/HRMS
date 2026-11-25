@@ -3,8 +3,6 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { errMsg } from '../api';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
 export default function Login() {
   const { isAuth, login } = useAuth();
   const navigate = useNavigate();
@@ -12,7 +10,6 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   if (isAuth) return <Navigate to="/dashboard" replace />;
@@ -20,12 +17,7 @@ export default function Login() {
   const submit = async (e) => {
     e.preventDefault();
     setError('');
-    const errors = {};
-    if (!email.trim()) errors.email = 'Enter your email address.';
-    else if (!EMAIL_RE.test(email.trim())) errors.email = 'Enter a valid email address, such as name@company.com.';
-    if (!password) errors.password = 'Enter your password.';
-    setFieldErrors(errors);
-    if (Object.keys(errors).length) return;
+    if (!email.trim() || !password) return setError('Email and password are required');
     setLoading(true);
     try {
       await login(email.trim(), password);
@@ -55,14 +47,13 @@ export default function Login() {
             <p className="hint">Authorized HR/Admin users only</p>
             {error && <div className="alert">{error}</div>}
             <div className="field">
-              <label htmlFor="login-email">Email Address</label>
-              <input id="login-email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setFieldErrors((prev) => ({ ...prev, email: '' })); }} placeholder="admin@hrms.com" autoFocus aria-invalid={!!fieldErrors.email} aria-describedby={fieldErrors.email ? 'login-email-error' : undefined} />
-              {fieldErrors.email && <small className="err" id="login-email-error">{fieldErrors.email}</small>}
+              <label>Email Address</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@hrms.com" autoFocus />
             </div>
             <div className="field">
-              <label htmlFor="login-password">Password</label>
+              <label>Password</label>
               <div className="password-input-wrap">
-                <input id="login-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => { setPassword(e.target.value); setFieldErrors((prev) => ({ ...prev, password: '' })); }} placeholder="••••••••" aria-invalid={!!fieldErrors.password} aria-describedby={fieldErrors.password ? 'login-password-error' : undefined} />
+                <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
                 <button
                   type="button"
                   className="password-toggle"
@@ -77,7 +68,6 @@ export default function Login() {
                   )}
                 </button>
               </div>
-              {fieldErrors.password && <small className="err" id="login-password-error">{fieldErrors.password}</small>}
             </div>
             <button className="btn primary block" disabled={loading}>{loading ? 'Signing in…' : 'Login'}</button>
             <Link to="/" className="back">← Back to home</Link>
