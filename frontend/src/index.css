@@ -10,7 +10,7 @@ h1,h2,h3,h4{margin:0}
 .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--text)}
 .btn.sm{padding:.35rem .7rem;font-size:.8rem}.btn.lg{padding:.85rem 1.8rem;font-size:1rem}.btn.block{width:100%}
 .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1.25rem;box-shadow:0 1px 3px rgba(15,42,92,.05)}
-.brand{font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:.5px}.brand span{color:#60a5fa}.brand.dark{color:var(--navy)}.brand.dark span{color:var(--blue)}.brand.center{text-align:center;margin-bottom:.5rem}
+.brand{font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:.5px}.brand span{color:#60a5fa}.brand.dark{color:var(--navy);font-size:2rem;letter-spacing:.7px}.brand.dark span{color:var(--blue)}.brand.center{text-align:center;margin-bottom:.5rem}
 .home{min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(rgba(248,250,253,.25),rgba(248,250,253,.4)),url('/images/home-background.png') center 45%/cover fixed no-repeat}
 .home-nav{display:flex;justify-content:space-between;align-items:center;padding:1rem 5%}
 .hero{text-align:center;max-width:900px;width:100%;margin:0 auto;padding:4rem 1.25rem;flex:1}
