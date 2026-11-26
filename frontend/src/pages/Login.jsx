@@ -1,23 +1,31 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { errMsg } from '../api';
+import api, { errMsg } from '../api';
 
 export default function Login() {
   const { isAuth, login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const resetToken = searchParams.get('resetToken');
+  const forgotMode = searchParams.get('forgot') === '1';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState('');
 
   if (isAuth) return <Navigate to="/dashboard" replace />;
 
   const submit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!email.trim() || !password) return setError('Email and password are required');
+    if (!email.trim()) return setError('Enter your email address to sign in.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      return setError('Enter a valid email address, for example admin@hrms.com.');
+    }
+    if (!password) return setError('Enter your password to sign in.');
     setLoading(true);
     try {
       await login(email.trim(), password);
@@ -27,6 +35,33 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const requestReset = async (e) => {
+    e.preventDefault();
+    setError(''); setNotice('');
+    if (!email.trim()) return setError('Enter your email address to receive a reset link.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) return setError('Enter a valid email address.');
+    setLoading(true);
+    try {
+      const { data } = await api.post('/auth/forgot-password', { email: email.trim() });
+      setNotice(data.message);
+    } catch (err) { setError(errMsg(err)); }
+    finally { setLoading(false); }
+  };
+
+  const updatePassword = async (e) => {
+    e.preventDefault();
+    setError(''); setNotice('');
+    if (password.length < 8) return setError('Choose a password with at least 8 characters.');
+    setLoading(true);
+    try {
+      const { data } = await api.post('/auth/reset-password', { token: resetToken, password });
+      setNotice(data.message);
+      setPassword('');
+      setSearchParams({}, { replace: true });
+    } catch (err) { setError(errMsg(err)); }
+    finally { setLoading(false); }
   };
 
   return (
@@ -41,19 +76,33 @@ export default function Login() {
           </div>
         </aside>
         <section className="login-form-panel" aria-label="Admin sign in">
-          <form className="login-card" onSubmit={submit} noValidate>
+          <form className="login-card" onSubmit={resetToken ? updatePassword : forgotMode ? requestReset : submit} noValidate>
             <div className="brand dark">HR<span>MS</span></div>
-            <h2>Admin Login</h2>
-            <p className="hint">Authorized HR/Admin users only</p>
+            <h2>{resetToken ? 'Reset Password' : 'Admin Login'}</h2>
+            <p className="hint">{resetToken ? 'Choose a new password for your account.' : 'Authorized HR/Admin users only'}</p>
             {error && <div className="alert">{error}</div>}
+            {notice && <div className="alert success-alert" role="status">{notice}</div>}
+            {resetToken ? (
+              <>
+                <div className="field"><label htmlFor="new-password">New Password</label><input id="new-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></div>
+                <button className="btn primary block" disabled={loading}>{loading ? 'Updating…' : 'Update Password'}</button>
+              </>
+            ) : (
+              <>
             <div className="field">
-              <label>Email Address</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@hrms.com" autoFocus />
+              <label htmlFor="login-email">Email Address</label>
+              <input id="login-email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} placeholder="admin@hrms.com" autoFocus autoComplete="username" />
             </div>
+            {forgotMode ? (
+              <>
+                <button type="submit" className="btn primary block" disabled={loading}>{loading ? 'Sending…' : 'Send Reset Link'}</button>
+                <button type="button" className="back link-button" onClick={() => { setError(''); setNotice(''); setSearchParams({}); }}>← Back to login</button>
+              </>
+            ) : <>
             <div className="field">
-              <label>Password</label>
+              <label htmlFor="login-password">Password</label>
               <div className="password-input-wrap">
-                <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                <input id="login-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }} placeholder="••••••••" autoComplete="current-password" />
                 <button
                   type="button"
                   className="password-toggle"
@@ -69,7 +118,11 @@ export default function Login() {
                 </button>
               </div>
             </div>
-            <button className="btn primary block" disabled={loading}>{loading ? 'Signing in…' : 'Login'}</button>
+            <button type="submit" className="btn primary block" disabled={loading}>{loading ? 'Signing in…' : 'Login'}</button>
+            <button type="button" className="back link-button" onClick={() => window.alert('HR password is handled by the Administration team. Please contact your administrator.')}>Forgot password?</button>
+            </>}
+              </>
+            )}
             <Link to="/" className="back">← Back to home</Link>
           </form>
         </section>

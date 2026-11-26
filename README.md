@@ -4,36 +4,77 @@ React (Vite) + Node/Express + MongoDB. HR/Admin login, employee CRUD, search, Ex
 
 ## Prerequisites
 - Node.js 18+
-- MongoDB running locally (`mongodb://127.0.0.1:27017`) or a MongoDB Atlas connection string
+- MongoDB running locally (`mongodb://127.0.0.1:27017`) or a MongoDB Atlas connection string.
 
-## 1. Backend
+## 1. Backend Setup
+
 ```bash
-cd server
+cd backend
 npm install
-cp .env.example .env      # edit JWT_SECRET, MONGO_URI, ADMIN_EMAIL, ADMIN_PASSWORD
-npm run seed              # creates the HR/Admin account (password stored as a bcrypt hash)
-npm run dev               # http://localhost:5000
+cp .env.example .env
 ```
 
-## 2. Frontend
+Edit `.env` and configure:
+- `JWT_SECRET`
+- `MONGO_URI`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
+
+Then run:
+
 ```bash
-cd client
-npm install
-cp .env.example .env      # VITE_API_URL=http://localhost:5000/api
-npm run dev               # http://localhost:5173
+npm run seed
+npm run dev
 ```
 
-## 3. Use it
-Open http://localhost:5173 -> Admin Login -> sign in with ADMIN_EMAIL / ADMIN_PASSWORD
-(defaults in .env.example: `admin@hrms.com` / `Admin@123` - change these).
+Backend runs at: `http://localhost:5007`
 
-## API (all /api/employees routes require `Authorization: Bearer <token>`)
+## 2. Frontend Setup
+
+Open another terminal:
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+```
+
+Configure the API URL in `.env`:
+
+```env
+VITE_API_URL=http://localhost:5007/api
+```
+
+Start the frontend:
+
+```bash
+npm run dev
+```
+
+Frontend runs at: `http://localhost:5173`
+
+## 3. How to Use
+
+1. Open `http://localhost:5173`.
+2. Go to Admin Login.
+3. Sign in using `ADMIN_EMAIL` and `ADMIN_PASSWORD` configured in the backend `.env` file.
+
+Default credentials in `.env.example`:
+- Email: `admin@hrms.com`
+- Password: `Admin@123`
+
+**Important:** Change the default credentials before using the application.
+
+## 4. API Endpoints
+
+All `/api/employees` routes require `Authorization: Bearer <token>`.
+
 | Method | Endpoint | Purpose |
 |---|---|---|
-| POST | /api/auth/login | Admin login, returns JWT |
-| GET | /api/employees | List all |
-| GET | /api/employees/:id | Get one |
-| POST | /api/employees | Add (ID auto-generated, duplicate email blocked) |
-| PUT | /api/employees/:id | Update |
-| DELETE | /api/employees/:id | Delete |
-| GET | /api/employees/export | Download Employee_List.xlsx |
+| POST | `/api/auth/login` | Admin login, returns JWT |
+| GET | `/api/employees` | List all employees |
+| GET | `/api/employees/:id` | Get one employee |
+| POST | `/api/employees` | Add employee (ID auto-generated, duplicate email blocked) |
+| PUT | `/api/employees/:id` | Update employee |
+| DELETE | `/api/employees/:id` | Delete employee |
+| GET | `/api/employees/export` | Download Employee_List.xlsx |

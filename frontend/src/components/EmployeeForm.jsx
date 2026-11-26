@@ -2,16 +2,26 @@ import { useState } from 'react';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_RE = /^\+?[0-9\s-]{10,15}$/;
+const NAME_RE = /^[\p{L}_ ]+$/u;
 
 export default function EmployeeForm({ initial, onSubmit, onClose, saving }) {
   const [f, setF] = useState({ name: '', email: '', phone: '', designation: '', ...initial });
   const [errs, setErrs] = useState({});
-  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const set = (k) => (e) => {
+    setF({ ...f, [k]: e.target.value });
+    setErrs((current) => {
+      if (!current[k]) return current;
+      const next = { ...current };
+      delete next[k];
+      return next;
+    });
+  };
 
   const submit = (e) => {
     e.preventDefault();
     const er = {};
     ['name', 'email', 'phone', 'designation'].forEach((k) => { if (!String(f[k]).trim()) er[k] = 'Required'; });
+    if (!er.name && !NAME_RE.test(f.name)) er.name = 'Use letters, spaces, and underscores only.';
     if (!er.email && !EMAIL_RE.test(f.email.trim())) er.email = 'Enter a valid email';
     if (!er.phone && !PHONE_RE.test(f.phone.trim())) er.phone = 'Enter a valid phone (10-15 digits)';
     setErrs(er);
