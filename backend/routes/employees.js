@@ -18,6 +18,15 @@ function validate(b) {
   return { data: { name, email, phone, designation } };
 }
 
+function emailMatch(email) {
+  const escaped = email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return { email: new RegExp(`^${escaped}$`, 'i') };
+}
+
+function isEmailDuplicate(error) {
+  return error.code === 11000 && (error.keyPattern?.email === 1 || Object.hasOwn(error.keyValue || {}, 'email'));
+}
+
 const validId = (req, res, next) =>
   mongoose.isValidObjectId(req.params.id) ? next() : res.status(400).json({ message: 'Invalid employee id' });
 
@@ -61,12 +70,12 @@ router.post('/', async (req, res, next) => {
   try {
     const { data, error } = validate(req.body);
     if (error) return res.status(400).json({ message: error });
-    if (await Employee.findOne({ email: data.email }))
+    if (await Employee.findOne(emailMatch(data.email)))
       return res.status(409).json({ message: 'An employee with this email already exists' });
     const emp = await Employee.create(data);
     res.status(201).json(emp);
   } catch (e) {
-    if (e.code === 11000) return res.status(409).json({ message: 'Duplicate employee email' });
+    if (isEmailDuplicate(e)) return res.status(409).json({ message: 'An employee with this email already exists' });
     next(e);
   }
 });
@@ -75,12 +84,12 @@ router.put('/:id', validId, async (req, res, next) => {
   try {
     const { data, error } = validate(req.body);
     if (error) return res.status(400).json({ message: error });
-    if (await Employee.findOne({ email: data.email, _id: { $ne: req.params.id } }))
+    if (await Employee.findOne({ ...emailMatch(data.email), _id: { $ne: req.params.id } }))
       return res.status(409).json({ message: 'An employee with this email already exists' });
     const emp = await Employee.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true });
     emp ? res.json(emp) : res.status(404).json({ message: 'Employee not found' });
   } catch (e) {
-    if (e.code === 11000) return res.status(409).json({ message: 'Duplicate employee email' });
+    if (isEmailDuplicate(e)) return res.status(409).json({ message: 'An employee with this email already exists' });
     next(e);
   }
 });
